@@ -56,8 +56,6 @@ def run():
 
     # Display
     st.metric("Simulated Sharpe", f"{overall:.4f}")
-    st.metric("Avg HitRate Top200", f"{hit_top:.2%}")
-    st.metric("Avg HitRate Bottom200", f"{hit_bot:.2%}")
 
     st.subheader("Daily Spread Return")
     st.line_chart(daily_sim.set_index('Date')['Daily_Spread_Return'])

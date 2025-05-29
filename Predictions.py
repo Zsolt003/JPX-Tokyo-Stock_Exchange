@@ -58,31 +58,26 @@ def run():
         meta_daily_df = pd.concat(meta_daily, ignore_index=True)
         return meta_df, meta_daily_df
 
-    # 1) Select dataset
+   
     file_option = st.radio("Dataset:", ["Validation", "Test"])
     raw_fp = f"data/{'val' if file_option == 'Validation' else 'test'}_preds.csv"
     meta_fp = f"data/{'val' if file_option == 'Validation' else 'test'}_meta.csv"
 
-    # 2) Load the original predictions
     data = load_data(raw_fp)
 
-    # 3) Modellválasztás kezelése
     model_option = st.radio(
         "Model:",
         ["LGB_Pred", "LSTM_Pred", "Ridge_Pred", "XGB_Pred", "Meta_Model"],
         key="model_select"
     )
 
-    # Gomb a modell hozzáadásához
     if st.button("Add Model"):
         if model_option not in st.session_state.selected_models:
             st.session_state.selected_models.append(model_option)
 
-    # Gomb az összes modell törléséhez
     if st.button("Clear All Models"):
         st.session_state.selected_models = []
 
-    # 4) Minden kiválasztott modellhez adatok és táblázat generálása
     for model in st.session_state.selected_models:
         st.subheader(f"Results for {model}")
 
@@ -117,14 +112,13 @@ def run():
             )
             daily = daily_metrics_df(df)
 
-        # 5) Display results for the model
+        # Display results for the model
         overall_sharpe = daily['Daily_Spread_Return'].mean() / daily['Daily_Spread_Return'].std()
         st.metric(f"Aggregate Sharpe ({model})", f"{overall_sharpe:.4f}")
 
         st.subheader(f"Daily Metrics (Last 15) ({model})")
         st.dataframe(daily.tail(15), use_container_width=True)
 
-    # 6) Kombinált grafikon az összes kiválasztott modellhez
     if st.session_state.selected_models:
         combined_data = pd.DataFrame()
         for model in st.session_state.selected_models:
