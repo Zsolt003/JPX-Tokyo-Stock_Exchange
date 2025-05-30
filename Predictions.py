@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
-from utils.metrics import daily_metrics_df
+from utils.metrics import daily_metrics_df, compute_meta_df
 
 @st.cache_data
 def load_data(fp):
@@ -14,51 +14,6 @@ def run():
     if 'selected_models' not in st.session_state:
         st.session_state.selected_models = []
 
-    def compute_meta_df(data):
-        models = ["LGB_Pred", "LSTM_Pred", "Ridge_Pred", "XGB_Pred"]
-        all_model_dfs = []
-        all_model_dailies = []
-
-        # 1) DataFrame and daily metrics for each model
-        for m in models:
-            dfm = data[['RowId', 'Date', 'SecuritiesCode', 'Target']].copy()
-            dfm['True_Target'] = dfm['Target']
-            dfm['Predicted_Target'] = data[m]
-            dfm['Rank'] = (
-                dfm.groupby('Date')['Predicted_Target']
-                .rank(ascending=False, method='first')
-                - 1
-            )
-            dailym = daily_metrics_df(dfm)
-            all_model_dfs.append(dfm)
-            all_model_dailies.append(dailym)
-
-        # 2) Rows of the model with the best Sharpe ratio per day
-        meta_chunks = []
-        meta_daily = []
-        for d in sorted(data['Date'].unique()):
-            best_sharpe = -1e9
-            best_chunk = None
-            best_daily = None
-            for dfm, dailym in zip(all_model_dfs, all_model_dailies):
-                day = dailym[dailym['Date'] == d]
-                if day.empty:
-                    continue
-                sr = day['Daily_Spread_Return'].iloc[0]
-                std = dailym['Daily_Spread_Return'].std()
-                if std > 0 and sr / std > best_sharpe:
-                    best_sharpe = sr / std
-                    best_chunk = dfm[dfm['Date'] == d]
-                    best_daily = day
-            if best_chunk is not None:
-                meta_chunks.append(best_chunk)
-                meta_daily.append(best_daily)
-
-        meta_df = pd.concat(meta_chunks, ignore_index=True)
-        meta_daily_df = pd.concat(meta_daily, ignore_index=True)
-        return meta_df, meta_daily_df
-
-   
     file_option = st.radio("Dataset:", ["Validation", "Test"])
     raw_fp = f"data/{'val' if file_option == 'Validation' else 'test'}_preds.csv"
     meta_fp = f"data/{'val' if file_option == 'Validation' else 'test'}_meta.csv"

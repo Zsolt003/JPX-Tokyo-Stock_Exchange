@@ -1,6 +1,7 @@
 import streamlit as st
 
 def run():
+    # Custom CSS for the login page
     st.markdown("""
         <style>
         .login-container {
@@ -39,9 +40,10 @@ def run():
         </style>
     """, unsafe_allow_html=True)
 
+    # Valid credentials
     VALID_CREDENTIALS = {
-        "user": "user",
-        "admin": "admin"
+        "user": "AnuUKHgb7@iDLd4",
+        "admin": "w4AHNDBc@ZfbyKb"
     }
 
     st.title("🔒 Login")
@@ -59,7 +61,6 @@ def run():
                     st.session_state.logged_in = True
                     st.session_state.username = username
                     st.success(f"Welcome, {username}!")
-
                     # Redirect to the main app
                     st.rerun()
                 else:

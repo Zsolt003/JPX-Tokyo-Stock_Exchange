@@ -25,29 +25,34 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Inicializáljuk a session state-et a bejelentkezéshez
+# Initialize session state for login status and username
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.username = None
 
-# Ha a felhasználó nincs bejelentkezve, a login oldalt mutatjuk
+# If user is not logged in, show the login page
 if not st.session_state.logged_in:
     import Login
     Login.run()
 else:
-    # Navigation
+    # Configure navigation based on user role
+    if st.session_state.username == "admin":
+        navigation_options = ["🏠 Home", "📈 Predictions", "💱 Simulate Competition", "📂 Upload CSV", "ℹ️ About"]
+    else:
+        navigation_options = ["🏠 Home", "📈 Predictions", "💱 Simulate Competition", "ℹ️ About"]
+
     selected_page = st.sidebar.radio(
         "Navigation",
-        ["🏠 Home", "📈 Predictions", "💱 Simulate Competition", "ℹ️ About"]
+        navigation_options
     )
 
-    # Kijelentkezés gomb az oldalsávban
+    # Logout button in the sidebar
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
         st.session_state.username = None
         st.rerun()
 
-    # Oldalak tartalma
+    # Page content
     if selected_page == "📈 Predictions":
         import Predictions
         Predictions.run()
@@ -67,6 +72,9 @@ else:
 
             3. **Measurement and Optimization of Strategy Performance**: The project employs the Sharpe ratio to evaluate trading strategies, which is a risk-adjusted measure of returns. The strategy's performance is determined by daily returns, enabling the construction of a profitable portfolio.
         """)
+    elif selected_page == "📂 Upload CSV" and st.session_state.username == "admin":
+        import UploadCSV
+        UploadCSV.run()
     else:
         st.title("🏠 Home")
         st.write("""
