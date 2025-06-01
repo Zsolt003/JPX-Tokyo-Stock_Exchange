@@ -39,7 +39,7 @@ else:
     if st.session_state.username == "admin":
         navigation_options = ["🏠 Home", "📈 Predictions", "💱 Simulate Competition", "📂 Upload CSV", "ℹ️ About"]
     else:
-        navigation_options = ["🏠 Home", "📈 Predictions", "💱 Simulate Competition", "ℹ️ About"]
+        navigation_options = ["🏠 Home", "📈 Predictions", "💱 Simulate Competition", "📂 Upload CSV", "ℹ️ About"]
 
     selected_page = st.sidebar.radio(
         "Navigation",
@@ -72,7 +72,7 @@ else:
 
             3. **Measurement and Optimization of Strategy Performance**: The project employs the Sharpe ratio to evaluate trading strategies, which is a risk-adjusted measure of returns. The strategy's performance is determined by daily returns, enabling the construction of a profitable portfolio.
         """)
-    elif selected_page == "📂 Upload CSV" and st.session_state.username == "admin":
+    elif selected_page == "📂 Upload CSV":
         import UploadCSV
         UploadCSV.run()
     else:
