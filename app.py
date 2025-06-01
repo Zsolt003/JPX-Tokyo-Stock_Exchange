@@ -1,83 +1,175 @@
 import streamlit as st
+import base64
 
+# Set page config
 st.set_page_config(page_title="Stock Market App (JPX)", layout="wide")
 
-# Sidebar spacing and font styling
-st.markdown("""
+# Load and encode the background image
+try:
+    with open("exchange.png", "rb") as image_file:
+        encoded_image = base64.b64encode(image_file.read()).decode()
+except FileNotFoundError:
+    st.error("Image not found!")
+    encoded_image = ""
+
+# Custom CSS styling for sidebar, content, and Home/About page styling
+st.markdown(
+    f"""
     <style>
-    [data-testid="stSidebar"] .stRadio > div {
+    [data-testid="stSidebar"] .stRadio > div {{
         display: flex;
         flex-direction: column;
         gap: 2.0rem;
-    }
-    [data-testid="stSidebar"] label {
+    }}
+    [data-testid="stSidebar"] label {{
         font-size: 1.2rem;
-    }
-    .stMarkdown, .stText, .stDataFrame {
+    }}
+    .stMarkdown, .stText, .stDataFrame {{
         font-size: 1.1rem;
-    }
-    h1, .stTitle {
+    }}
+    h1, .stTitle {{
         font-size: 2rem;
-    }
-    h2, .stHeader {
+    }}
+    h2, .stHeader {{
         font-size: 1.5rem;
-    }
+    }}
+    /* Background image for Home page only */
+    .home-container {{
+        background-image: url('data:image/png;base64,{encoded_image}');
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        padding: 20px;
+        border-radius: 10px;
+        min-height: 400px;
+    }}
+    /* Optional: Ensure text is readable over the image */
+    .home-container > div {{
+        background-color: rgba(255, 255, 255, 0.8);
+        padding: 15px;
+        border-radius: 5px;
+    }}
+    /* Style for the welcome text */
+    .welcome-text {{
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-align: center;
+        color: #FFD700; /* Gold color */
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3), 0 0 5px rgba(255, 215, 0, 0.5); /* Shadow and glow for golden effect */
+        border-bottom: 2px solid #FFD700; /* Gold underline */
+        padding-bottom: 10px;
+        margin: 0 auto;
+        max-width: 800px;
+    }}
+    /* Container and styling for About page */
+    .about-container {{
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 800px;
+        margin: 0 auto;
+    }}
+    .about-text {{
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-align: center;
+        color: #FFD700; /* Gold color */
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3), 0 0 5px rgba(255, 215, 0, 0.5); /* Shadow and glow for golden effect */
+        border-bottom: 2px solid #FFD700; /* Gold underline */
+        padding-bottom: 10px;
+        margin: 0 auto;
+        max-width: 800px;
+    }}
     </style>
-""", unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True
+)
 
-# Initialize session state for login status and username
+# Initialize session state for login
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.username = None
 
-# If user is not logged in, show the login page
+# Show login page if not logged in
 if not st.session_state.logged_in:
     import Login
     Login.run()
 else:
-    # Configure navigation based on user role
+    # Admin user has access to all pages including the AI Assistant
     if st.session_state.username == "admin":
-        navigation_options = ["🏠 Home", "📈 Predictions", "💱 Simulate Competition", "📂 Upload CSV", "ℹ️ About"]
+        navigation_options = [
+            "🏠 Home",
+            "📈 Predictions",
+            "💱 Simulate Competition",
+            "📂 Upload CSV",
+            "🤖 AI Assistant",  # Admin-only
+            "ℹ️ About"
+        ]
     else:
-        navigation_options = ["🏠 Home", "📈 Predictions", "💱 Simulate Competition", "📂 Upload CSV", "ℹ️ About"]
+        navigation_options = [
+            "🏠 Home",
+            "📈 Predictions",
+            "💱 Simulate Competition",
+            "📂 Upload CSV",
+            "ℹ️ About"
+        ]
 
-    selected_page = st.sidebar.radio(
-        "Navigation",
-        navigation_options
-    )
+    # Sidebar navigation menu
+    selected_page = st.sidebar.radio("Navigation", navigation_options)
 
-    # Logout button in the sidebar
+    # Logout button
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
         st.session_state.username = None
+        # Clear user-specific session state
+        for key in ['selected_models', 'sampled_dates']:
+            if key in st.session_state:
+                del st.session_state[key]
         st.rerun()
 
-    # Page content
+    # Route to selected page
     if selected_page == "📈 Predictions":
         import Predictions
         Predictions.run()
     elif selected_page == "💱 Simulate Competition":
         import SimulateCompetition
         SimulateCompetition.run()
-    elif selected_page == "ℹ️ About":
-        st.title("ℹ️ About")
-        st.write("""
-            The purpose of the website is to analyze the Japanese financial market within the framework of developing and evaluating quantitative trading strategies. The research is based on data provided by the Japan Exchange Group, Inc. (JPX), which includes stock and derivative trading data from the Tokyo Stock Exchange (TSE), the Osaka Exchange (OSE), and the Tokyo Commodity Exchange (TOCOM). The JPX aimed to host a competition with this data on Kaggle, the world's largest data science community platform, where participants were tasked with developing advanced quantitative trading models that perform well in real-world scenarios.
-
-            **Objectives to be achieved**
-
-            1. **Analysis and Preparation of Stock Market Data**: Thoroughly examine the structure of Japanese stock market data, with particular attention to stock prices and historical data. Data cleaning and preparation are crucial for accurate model development.
-
-            2. **Development and Testing of Quantitative Models**: The project involves developing algorithms and predictive models capable of forecasting stock returns. These models are used to rank stocks, aiming to select those with the highest expected returns and identify the least promising ones.
-
-            3. **Measurement and Optimization of Strategy Performance**: The project employs the Sharpe ratio to evaluate trading strategies, which is a risk-adjusted measure of returns. The strategy's performance is determined by daily returns, enabling the construction of a profitable portfolio.
-        """)
     elif selected_page == "📂 Upload CSV":
         import UploadCSV
         UploadCSV.run()
+    elif selected_page == "🤖 AI Assistant" and st.session_state.username == "admin":
+        import LLMAssistant
+        LLMAssistant.run()
+    elif selected_page == "ℹ️ About":
+        st.title("ℹ️ About")
+        # Wrap About page content in a container
+        st.markdown('<div class="about-container">', unsafe_allow_html=True)
+        # Style the about text
+        st.markdown(
+            """
+            <div class="about-text">
+            This platform analyzes the Japanese stock market using quantitative trading strategies 
+            based on JPX (Japan Exchange Group) data from the Kaggle competition.<br><br>
+            Main Goals:<br>
+            1. Data Cleaning and Feature Engineering<br>
+            2. Building Predictive Models for Return Forecasting<br>
+            3. Evaluating Performance Using Sharpe Ratio
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
     else:
         st.title("🏠 Home")
-        st.write("""
-            This application allows comparing machine learning model predictions 
-            based on the JPX stock market competition data.
-        """)
+        # Wrap Home page content in a container with the background image
+        st.markdown('<div class="home-container">', unsafe_allow_html=True)
+        # Style the welcome text
+        st.markdown(
+            """
+            <div class="welcome-text">
+            Welcome to the JPX Stock Market App! Use the sidebar to navigate through the platform.<br>
+            You can explore predictions, upload your own datasets, simulate the competition, or access the AI assistant (admin only).
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        st.markdown('</div>', unsafe_allow_html=True)

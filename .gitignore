@@ -1,4 +1,6 @@
 streamlit_env/
 *.csv
 *.npy
+.env
+exchange.png
 

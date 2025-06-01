@@ -1,4 +1,17 @@
 import streamlit as st
+import os
+from dotenv import load_dotenv
+import json
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Retrieve and parse VALID_CREDENTIALS from .env
+try:
+    VALID_CREDENTIALS = json.loads(os.getenv("VALID_CREDENTIALS", "{}"))
+except json.JSONDecodeError as e:
+    st.error(f"Error parsing VALID_CREDENTIALS from .env: {e}")
+    VALID_CREDENTIALS = {}
 
 def run():
     # Custom CSS for the login page
@@ -39,12 +52,6 @@ def run():
         }
         </style>
     """, unsafe_allow_html=True)
-
-    # Valid credentials
-    VALID_CREDENTIALS = {
-        "user": "AnuUKHgb7@iDLd4",
-        "admin": "w4AHNDBc@ZfbyKb"
-    }
 
     st.title("🔒 Login")
     st.write("Please enter your username and password to access the application.")
