@@ -40,45 +40,45 @@ def daily_metrics_df(df):
     return pd.DataFrame(metrics).sort_values('Date')
 
 def compute_meta_df(data):
-        models = ["LGB_Pred", "LSTM_Pred", "Ridge_Pred", "XGB_Pred"]
-        all_model_dfs = []
-        all_model_dailies = []
+    models = ["LGB_Pred", "LSTM_Pred", "Ridge_Pred", "XGB_Pred"]
+    all_model_dfs = []
+    all_model_dailies = []
 
-        # 1) DataFrame and daily metrics for each model
-        for m in models:
-            dfm = data[['RowId', 'Date', 'SecuritiesCode', 'Target']].copy()
-            dfm['True_Target'] = dfm['Target']
-            dfm['Predicted_Target'] = data[m]
-            dfm['Rank'] = (
-                dfm.groupby('Date')['Predicted_Target']
-                .rank(ascending=False, method='first')
-                - 1
-            )
-            dailym = daily_metrics_df(dfm)
-            all_model_dfs.append(dfm)
-            all_model_dailies.append(dailym)
+    # 1) DataFrame and daily metrics for each model
+    for m in models:
+        dfm = data[['RowId', 'Date', 'SecuritiesCode', 'Target']].copy()
+        dfm['True_Target'] = dfm['Target']
+        dfm['Predicted_Target'] = data[m]
+        dfm['Rank'] = (
+            dfm.groupby('Date')['Predicted_Target']
+            .rank(ascending=False, method='first')
+            - 1
+        )
+        dailym = daily_metrics_df(dfm)  # Assuming daily_metrics_df is defined elsewhere
+        all_model_dfs.append(dfm)
+        all_model_dailies.append(dailym)
 
-        # 2) Rows of the model with the best Sharpe ratio per day
-        meta_chunks = []
-        meta_daily = []
-        for d in sorted(data['Date'].unique()):
-            best_sharpe = -1e9
-            best_chunk = None
-            best_daily = None
-            for dfm, dailym in zip(all_model_dfs, all_model_dailies):
-                day = dailym[dailym['Date'] == d]
-                if day.empty:
-                    continue
-                sr = day['Daily_Spread_Return'].iloc[0]
-                std = dailym['Daily_Spread_Return'].std()
-                if std > 0 and sr / std > best_sharpe:
-                    best_sharpe = sr / std
-                    best_chunk = dfm[dfm['Date'] == d]
-                    best_daily = day
-            if best_chunk is not None:
-                meta_chunks.append(best_chunk)
-                meta_daily.append(best_daily)
+    # 2) Meta DataFrame using weighted average of all model predictions
+    meta_df = data[['RowId', 'Date', 'SecuritiesCode', 'Target']].copy()
+    meta_df['True_Target'] = meta_df['Target']
 
-        meta_df = pd.concat(meta_chunks, ignore_index=True)
-        meta_daily_df = pd.concat(meta_daily, ignore_index=True)
-        return meta_df, meta_daily_df
+    # Define weights
+    weights = {"LGB_Pred": 2, "LSTM_Pred": 1.25, "Ridge_Pred": 0, "XGB_Pred": 0.75}
+    # Compute weighted sum
+    weighted_sum = sum(data[m] * weights[m] for m in models)
+    # Compute total weight
+    total_weight = sum(weights.values())
+    # Compute weighted average
+    meta_df['Predicted_Target'] = weighted_sum / total_weight
+
+    # 3) Rank the weighted predictions
+    meta_df['Rank'] = (
+        meta_df.groupby('Date')['Predicted_Target']
+        .rank(ascending=False, method='first')
+        - 1
+    )
+
+    # 4) Daily metrics for the meta DataFrame
+    meta_daily_df = daily_metrics_df(meta_df)  # Assuming daily_metrics_df is defined elsewhere
+
+    return meta_df, meta_daily_df

@@ -74,7 +74,7 @@ def ask_llm(prompt: str) -> str:
     }
 
     response = client.chat.completions.create(
-        model="gpt-4",
+        model="gpt-4.1",
         messages=[system_message, user_message],
         temperature=0.5,
         max_tokens=1500,

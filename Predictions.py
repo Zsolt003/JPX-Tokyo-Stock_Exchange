@@ -122,8 +122,7 @@ def run():
         if is_admin:
             st.markdown("**As an admin, you may ask the LLM to analyze these combined returns.**")
             if st.button("💡 Explain with LLM"):
-                # Take only the last 60 days to limit token usage
-                last_n_days = 180
+                last_n_days = 150
                 snippet = combined_data.tail(last_n_days).reset_index()
                 snippet_csv = snippet.to_csv(index=False)
 
@@ -135,7 +134,7 @@ def run():
                     "(Hint: large positive/negative daily spread returns skew the mean/std.)\n"
                     "2. Identify any multi-day or seasonal trends (e.g., “Sharpe tends to rise around end-of-month,” "
                     "or “Sharpe dips at quarter boundaries,” etc.)\n"
-                    "3. Summarize, in plain English, what patterns you observe.\n\n"
+                    "3. Summarize, in plain English, what patterns you observe (if multiple models are being chosen, which days which selected model performs better and a possible explanation).\n\n"
                     f"Here is the snippet (last {last_n_days} days):\n\n"
                     f"{snippet_csv}\n\n"
                     "Answer concisely but with enough detail so a user can understand why some days are better/worse and "
